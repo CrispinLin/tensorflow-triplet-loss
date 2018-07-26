@@ -1,7 +1,7 @@
 .vscode/
 data/mnist/
-experiments/basemodel/
-!experiments/basemodel/params.json
+experiments/base_model/
+!experiments/base_model/params.json
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
