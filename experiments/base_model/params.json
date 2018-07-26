@@ -7,7 +7,7 @@
     "bn_momentum": 0.9,
     "margin": 0.5,
     "embedding_size": 64,
-    "triplet_strategy": "batch_all",
+    "triplet_strategy": "batch_hard",
     "squared": false,
     "image_size": 28,
     "num_labels": 392,
