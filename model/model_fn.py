@@ -25,10 +25,11 @@ def build_model(is_training, images, params):
     bn_momentum = params.bn_momentum
     channels = [num_channels, num_channels * 2]
     for i, c in enumerate(channels):
-        with tf.variable_scope('block_{}'.format(i+1)):
+        with tf.variable_scope('block_{}'.format(i + 1)):
             out = tf.layers.conv2d(out, c, 3, padding='same')
             if params.use_batch_norm:
-                out = tf.layers.batch_normalization(out, momentum=bn_momentum, training=is_training)
+                out = tf.layers.batch_normalization(
+                    out, momentum=bn_momentum, training=is_training)
             out = tf.nn.relu(out)
             out = tf.layers.max_pooling2d(out, 2, 2)
 
@@ -56,8 +57,11 @@ def model_fn(features, labels, mode, params):
     is_training = (mode == tf.estimator.ModeKeys.TRAIN)
 
     images = features
-    images = tf.reshape(images, [-1, params.image_size, params.image_size, 1])
-    assert images.shape[1:] == [params.image_size, params.image_size, 1], "{}".format(images.shape)
+    images = tf.reshape(images, [-1, params.image_size, params.image_size, 3])
+    # IDEA: Possible implementations -@Lin at 7/26/2018, 11:23:16 PM
+    # change size here may make color image work
+    assert images.shape[1:] == [params.image_size, params.image_size,
+                                3], "{}".format(images.shape)
 
     # -----------------------------------------------------------
     # MODEL: define the layers of the model
@@ -75,27 +79,31 @@ def model_fn(features, labels, mode, params):
 
     # Define triplet loss
     if params.triplet_strategy == "batch_all":
-        loss, fraction = batch_all_triplet_loss(labels, embeddings, margin=params.margin,
-                                                squared=params.squared)
+        loss, fraction = batch_all_triplet_loss(
+            labels, embeddings, margin=params.margin, squared=params.squared)
     elif params.triplet_strategy == "batch_hard":
-        loss = batch_hard_triplet_loss(labels, embeddings, margin=params.margin,
-                                       squared=params.squared)
+        loss = batch_hard_triplet_loss(
+            labels, embeddings, margin=params.margin, squared=params.squared)
     else:
-        raise ValueError("Triplet strategy not recognized: {}".format(params.triplet_strategy))
+        raise ValueError("Triplet strategy not recognized: {}".format(
+            params.triplet_strategy))
 
     # -----------------------------------------------------------
     # METRICS AND SUMMARIES
     # Metrics for evaluation using tf.metrics (average over whole dataset)
     # TODO: some other metrics like rank-1 accuracy?
     with tf.variable_scope("metrics"):
-        eval_metric_ops = {"embedding_mean_norm": tf.metrics.mean(embedding_mean_norm)}
+        eval_metric_ops = {
+            "embedding_mean_norm": tf.metrics.mean(embedding_mean_norm)
+        }
 
         if params.triplet_strategy == "batch_all":
-            eval_metric_ops['fraction_positive_triplets'] = tf.metrics.mean(fraction)
+            eval_metric_ops['fraction_positive_triplets'] = tf.metrics.mean(
+                fraction)
 
     if mode == tf.estimator.ModeKeys.EVAL:
-        return tf.estimator.EstimatorSpec(mode, loss=loss, eval_metric_ops=eval_metric_ops)
-
+        return tf.estimator.EstimatorSpec(
+            mode, loss=loss, eval_metric_ops=eval_metric_ops)
 
     # Summaries for training
     tf.summary.scalar('loss', loss)
@@ -109,7 +117,8 @@ def model_fn(features, labels, mode, params):
     global_step = tf.train.get_global_step()
     if params.use_batch_norm:
         # Add a dependency to update the moving mean and variance for batch normalization
-        with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
+        with tf.control_dependencies(
+                tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
             train_op = optimizer.minimize(loss, global_step=global_step)
     else:
         train_op = optimizer.minimize(loss, global_step=global_step)

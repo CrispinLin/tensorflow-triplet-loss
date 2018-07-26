@@ -14,15 +14,19 @@ from model.utils import Params
 from model.input_fn import test_input_fn
 from model.model_fn import model_fn
 
-
 parser = argparse.ArgumentParser()
-parser.add_argument('--model_dir', default='experiments/base_model',
-                    help="Experiment directory containing params.json")
-parser.add_argument('--data_dir', default='data/mnist',
-                    help="Directory containing the dataset")
-parser.add_argument('--sprite_filename', default='experiments/mnist_10k_sprite.png',
-                    help="Sprite image for the projector")
-
+parser.add_argument(
+    '--model_dir',
+    default='experiments/base_model',
+    help="Experiment directory containing params.json")
+parser.add_argument(
+    '--data_dir',
+    default='data/mnist',
+    help="Directory containing the dataset")
+parser.add_argument(
+    '--sprite_filename',
+    default='experiments/mnist_10k_sprite.png',
+    help="Sprite image for the projector")
 
 if __name__ == '__main__':
     tf.reset_default_graph()
@@ -31,22 +35,24 @@ if __name__ == '__main__':
     # Load the parameters from json file
     args = parser.parse_args()
     json_path = os.path.join(args.model_dir, 'params.json')
-    assert os.path.isfile(json_path), "No json configuration file found at {}".format(json_path)
+    assert os.path.isfile(
+        json_path), "No json configuration file found at {}".format(json_path)
     params = Params(json_path)
 
     # Define the model
     tf.logging.info("Creating the model...")
-    config = tf.estimator.RunConfig(tf_random_seed=230,
-                                    model_dir=args.model_dir,
-                                    save_summary_steps=params.save_summary_steps)
+    config = tf.estimator.RunConfig(
+        tf_random_seed=230,
+        model_dir=args.model_dir,
+        save_summary_steps=params.save_summary_steps)
     estimator = tf.estimator.Estimator(model_fn, params=params, config=config)
-
 
     # EMBEDDINGS VISUALIZATION
 
     # Compute embeddings on the test set
     tf.logging.info("Predicting")
-    predictions = estimator.predict(lambda: test_input_fn(args.data_dir, params))
+    predictions = estimator.predict(
+        lambda: test_input_fn(args.data_dir, params))
 
     # TODO (@omoindrot): remove the hard-coded 10000
     embeddings = np.zeros((10000, params.embedding_size))
