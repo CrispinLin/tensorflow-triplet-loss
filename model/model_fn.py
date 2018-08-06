@@ -57,11 +57,11 @@ def model_fn(features, labels, mode, params):
     is_training = (mode == tf.estimator.ModeKeys.TRAIN)
 
     images = features
-    images = tf.reshape(images, [-1, params.image_size, params.image_size, 3])
+    images = tf.reshape(images, [-1, params.image_size, params.image_size, 1])
     # IDEA: Possible implementations -@Lin at 7/26/2018, 11:23:16 PM
     # change size here may make color image work
     assert images.shape[1:] == [params.image_size, params.image_size,
-                                3], "{}".format(images.shape)
+                                1], "{}".format(images.shape)
 
     # -----------------------------------------------------------
     # MODEL: define the layers of the model

@@ -86,7 +86,7 @@ def dataset(directory, images_file, labels_file):
         # Normalize from [0, 255] to [0.0, 1.0]
         image = tf.decode_raw(image, tf.uint8)
         image = tf.cast(image, tf.float32)
-        image = tf.reshape(image, [2352])
+        image = tf.reshape(image, [784])
         return image / 255.0
 
     def decode_label(label):
@@ -95,7 +95,7 @@ def dataset(directory, images_file, labels_file):
         return tf.to_int32(label)
 
     images = tf.data.FixedLengthRecordDataset(
-        images_file, 28 * 28 * 3, header_bytes=16)
+        images_file, 28 * 28 * 1, header_bytes=16)
     images = images.map(decode_image)
     labels = tf.data.FixedLengthRecordDataset(
         labels_file, 1, header_bytes=8).map(decode_label)
