@@ -13,6 +13,7 @@ import model.mnist_dataset as mnist_dataset
 from model.utils import Params
 from model.input_fn import test_input_fn
 from model.model_fn import model_fn
+from model.triplet_loss import _pairwise_distances
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -55,7 +56,7 @@ if __name__ == '__main__':
         lambda: test_input_fn(args.data_dir, params))
 
     # TODO (@omoindrot): remove the hard-coded 10000
-    embeddings = np.zeros((10000, params.embedding_size))
+    embeddings = np.zeros((10000, params.embedding_size), dtype=np.float32)
     for i, p in enumerate(predictions):
         embeddings[i] = p['embeddings']
 
@@ -86,19 +87,36 @@ if __name__ == '__main__':
         labels_tensor = dataset.make_one_shot_iterator().get_next()
         labels = sess.run(labels_tensor)
 
-    # Specify where you find the metadata
-    # Save the metadata file needed for Tensorboard projector
-    metadata_filename = "mnist_metadata.tsv"
-    with open(os.path.join(eval_dir, metadata_filename), 'w') as f:
-        for i in range(params.eval_size):
-            c = labels[i]
-            f.write('{}\n'.format(c))
-    embedding.metadata_path = metadata_filename
-
-    # Say that you want to visualise the embeddings
-    projector.visualize_embeddings(summary_writer, config)
-
-    saver = tf.train.Saver()
+    # for i, label in enumerate(labels):
+    #     print(i, label)
+    #     print(embeddings[i])
+    embeddings = embeddings[:len(labels)]
+    print("size of test dataset: ", len(embeddings))
     with tf.Session() as sess:
-        sess.run(embedding_var.initializer)
-        saver.save(sess, os.path.join(eval_dir, "embeddings.ckpt"))
+        dist = sess.run(_pairwise_distances(embeddings, squared=False))
+    mat = np.tile(labels, (len(labels), 1))
+    mask = mat == mat.transpose()
+    print("mask: ", mask)
+    positive_dist = np.ma.masked_array(dist, mask=~mask)
+    print("positive_dist: ", positive_dist)
+    print(np.amax(positive_dist))
+    negative_dist = np.ma.masked_array(dist, mask=mask)
+    print("negative_dist: ", negative_dist)
+    print(np.amin(negative_dist))
+    # np.savetxt("dist.csv", dist, delimiter=",")
+    # # Specify where you find the metadata
+    # # Save the metadata file needed for Tensorboard projector
+    # metadata_filename = "mnist_metadata.tsv"
+    # with open(os.path.join(eval_dir, metadata_filename), 'w') as f:
+    #     for i in range(params.eval_size):
+    #         c = labels[i]
+    #         f.write('{}\n'.format(c))
+    # embedding.metadata_path = metadata_filename
+
+    # # Say that you want to visualise the embeddings
+    # projector.visualize_embeddings(summary_writer, config)
+
+    # saver = tf.train.Saver()
+    # with tf.Session() as sess:
+    #     sess.run(embedding_var.initializer)
+    #     saver.save(sess, os.path.join(eval_dir, "embeddings.ckpt"))

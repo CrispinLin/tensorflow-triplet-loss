@@ -9,6 +9,7 @@ from model.input_fn import train_input_fn
 from model.input_fn import test_input_fn
 from model.model_fn import model_fn
 from model.utils import Params
+from tensorflow.python import debug as tf_debug
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -39,6 +40,8 @@ if __name__ == '__main__':
         save_summary_steps=params.save_summary_steps)
     estimator = tf.estimator.Estimator(model_fn, params=params, config=config)
 
+    hooks = [tf_debug.LocalCLIDebugHook()]
+
     # Train the model
     tf.logging.info("Starting training for {} epoch(s).".format(
         params.num_epochs))
@@ -46,6 +49,8 @@ if __name__ == '__main__':
 
     # Evaluate the model on the test set
     tf.logging.info("Evaluation on test set.")
-    res = estimator.evaluate(lambda: test_input_fn(args.data_dir, params))
+    res = estimator.evaluate(
+        # lambda: test_input_fn(args.data_dir, params), hooks=hooks)
+        lambda: test_input_fn(args.data_dir, params))
     for key in res:
         print("{}: {}".format(key, res[key]))
