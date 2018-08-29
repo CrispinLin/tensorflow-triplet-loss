@@ -14,6 +14,7 @@ from model.utils import Params
 from model.input_fn import test_input_fn
 from model.model_fn import model_fn
 from model.triplet_loss import _pairwise_distances
+import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -99,10 +100,15 @@ if __name__ == '__main__':
     print("mask: ", mask)
     positive_dist = np.ma.masked_array(dist, mask=~mask)
     print("positive_dist: ", positive_dist)
-    print(np.amax(positive_dist))
+    print("max_positive_dist: ", np.amax(positive_dist))
+    plt.hist(positive_dist.flatten(), bins='auto')
+    plt.show()
+
     negative_dist = np.ma.masked_array(dist, mask=mask)
     print("negative_dist: ", negative_dist)
-    print(np.amin(negative_dist))
+    print("min_negative_dist: ", np.amin(negative_dist))
+    plt.hist(negative_dist.flatten(), bins='auto')
+    plt.show()
     # np.savetxt("dist.csv", dist, delimiter=",")
     # # Specify where you find the metadata
     # # Save the metadata file needed for Tensorboard projector
